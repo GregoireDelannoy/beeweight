@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="static/chart.js"></script>
+</head>
+
+<body>
+    <label for="ndays">Nombre de jours à afficher</label>
+    <input type=number id="ndays" value="7">
+    <button onclick="showNDays()">Afficher les N jours</button>
+    <button onclick="tareZero()">Tare à zéro</button>
+    <label for="ngrams">Poids en grammes pour tare</label>
+    <input type=number id="ngrams" value="1000">
+    <button onclick="tareGrams()">Tare à N grammes</button>
+    <button onclick="startRealtime()">Commencer temps-réel</button>
+    <button onclick="stopRealtime()">Arrêter temps-réel</button>
+    <button onclick="clearMeasures()">Supprimer toutes les mesures</button>
+    <canvas id="chart"></canvas>
+    <script>
+        var ctx = document.getElementById('chart').getContext('2d');
+        window["myChart"] = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                    borderColor: 'rgb(0, 0, 0)',
+                    label: 'Poids en grammes',
+                    data: []
+                }]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time'
+                    }]
+                }
+            }
+        });
+
+        function clearMeasures() {
+            if (confirm("Supprimer TOUTES les mesures enregistrées ??")) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", '/delete_measures', true);
+                xhr.onreadystatechange = function () { // Call a function when the state changes.
+                    if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                        alert("Toutes les mesures ont été supprimées");
+                    } else {
+                        console.error("XHR STATUS");
+                        console.log(this);
+                    }
+                }
+                xhr.send(null);
+            }
+        }
+
+        function startRealtime() {
+            stopRealtime();
+            window["myChart"].data.datasets[0].data = [];
+            window["myChart"].update();
+            window["myInterval"] = setInterval(() => {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", '/realtime', true);
+                xhr.onreadystatechange = function () { // Call a function when the state changes.
+                    if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                        var data = JSON.parse(this.responseText)["data"];
+                        console.log(data)
+                        window["myChart"].data.datasets[0].data.push(data);
+                        window["myChart"].update();
+                    } else {
+                        console.error("XHR STATUS");
+                        console.log(this);
+                    }
+                }
+                xhr.send(null);
+            }, 1000);
+        }
+
+        function stopRealtime() {
+            clearInterval(window["myInterval"]);
+        }
+
+        function showNDays() {
+            var ndays = parseInt(document.getElementById('ndays').value);
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", '/history/' + ndays, true);
+            xhr.onreadystatechange = function () { // Call a function when the state changes.
+                if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                    var data = JSON.parse(this.responseText)["data"];
+                    console.log(data)
+                    window["myChart"].data.datasets[0].data = data;
+                    window["myChart"].update();
+                } else {
+                    console.error("XHR STATUS");
+                    console.log(this);
+                }
+            }
+            xhr.send(null);
+        }
+
+        function tareZero() {
+            if (confirm("Faire MAINTENANT la tare à zéro ?")) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", '/tare_zero', true);
+                xhr.onreadystatechange = function () { // Call a function when the state changes.
+                    if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                        alert("Tare zéro OK !");
+                    } else {
+                        console.error("XHR STATUS");
+                        console.log(this);
+                    }
+                }
+                xhr.send(null);
+            }
+        }
+
+        function tareGrams() {
+            var ngrams = parseInt(document.getElementById('ngrams').value)
+            if (confirm("Faire MAINTENANT la tare avec poids de " + ngrams + " grammes ?")) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", '/tare_grams/' + ngrams, true);
+                xhr.onreadystatechange = function () { // Call a function when the state changes.
+                    if (this.readyState === XMLHttpRequest.DONE && this.status === 200) {
+                        alert("Tare grammes OK !");
+                    } else {
+                        console.error("XHR STATUS");
+                        console.log(this);
+                    }
+                }
+                xhr.send(null);
+            }
+        }
+    </script>
+</body>
+
+</html>

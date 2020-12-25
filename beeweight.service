@@ -1,0 +1,9 @@
+[Unit]
+Description=Daemon to measure with hx711 and stuff
+
+[Service]
+ExecStart=/usr/bin/python3 /root/main.py
+Restart=always
+
+[Install]
+WantedBy=default.target
