@@ -74,6 +74,7 @@ def get_averaged_value(n):
     values = []
     for i in range(0, n):
         values.append(get_smoothed_value())
+        time.sleep(0.1)
     return statistics.mean(values)
 
 # Facteurs de tare et de facteur multiplicatif pour avoir des grammes ; réglables avec les fonctions de tare
@@ -164,20 +165,15 @@ def post_tare_grams(grams):
 def post_delete_measures():
     write_to_sql("DELETE FROM measures;")
 
+
+
 ## ---
 # Execution principale
 ## ---
 # Au lancement du programme, on récupère les derniers paramètres (offset, facteur) sauvegardés
 set_parameters_from_sql()
 
-# Lancer le serveur WEB
-run(host = "0.0.0.0", port = 80)
-
-
-
-## ---
 # Tâche de fond : un nouveau point toutes les 5 minutes
-## ---
 def run_background():
     while True:
         val = get_insert_data()
@@ -185,3 +181,7 @@ def run_background():
         time.sleep(300)
 
 threading.Thread(target = run_background).start()
+
+
+# Lancer le serveur WEB
+run(host = "0.0.0.0", port = 80)
