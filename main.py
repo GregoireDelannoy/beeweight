@@ -41,30 +41,34 @@ write_to_sql("CREATE TABLE IF NOT EXISTS parameters(time TIMESTAMP PRIMARY KEY, 
 # Acquisition données
 ## ---
 # Variables pour faire une fonction aléatoire à la place du hx711. Pas utile à terme.
-import random
-VAL_MIN = 30000
-VAL_MAX = 50000
-VAL_CURRENT = random.randrange(VAL_MIN, VAL_MAX)
-def get_raw_value_random():
-    global VAL_CURRENT
-    new = VAL_CURRENT + random.randrange(-100, 100)
-    VAL_CURRENT = max(min(new, VAL_MAX), VAL_MIN)
-    return VAL_CURRENT
+# import random
+# VAL_MIN = 30000
+# VAL_MAX = 50000
+# VAL_CURRENT = random.randrange(VAL_MIN, VAL_MAX)
+# def get_raw_value_random():
+#     global VAL_CURRENT
+#     new = VAL_CURRENT + random.randrange(-100, 100)
+#     VAL_CURRENT = max(min(new, VAL_MAX), VAL_MIN)
+#     return VAL_CURRENT
 
+# def get_smoothed_value():
+#     values = []
+#     for i in range(0, 11):
+#         values.append(get_raw_value_random())
+#     values.sort()
+#     # Ecarter les deux valeurs minimales et maximales
+#     values = values[2:-2]
+#     return statistics.mean(values)
 
-def get_raw_value_hx():
-    pass
-    # TODO!
-
+from hx711 import HX711
+hx = HX711(17,27)
+hx.reset()
 def get_smoothed_value():
-    values = []
-    for i in range(0, 11):
-        values.append(get_raw_value_random())
+    values = hx.get_raw_data(7)
     values.sort()
     # Ecarter les deux valeurs minimales et maximales
-    values = values[2:-2]
+    values = values[1:-1]
     return statistics.mean(values)
-
 
 ## ---
 # Traitement des données
@@ -82,12 +86,12 @@ CURRENT_OFFSET = 0
 CURRENT_FACTOR = 1
 def tare_zero():
     global CURRENT_OFFSET
-    CURRENT_OFFSET = get_averaged_value(10)
+    CURRENT_OFFSET = get_averaged_value(2)
     save_parameters_to_sql()
 
 def tare_grams(weight_in_grams):
     global CURRENT_FACTOR
-    raw = get_averaged_value(10)
+    raw = get_averaged_value(2)
     CURRENT_FACTOR = weight_in_grams / raw
     save_parameters_to_sql()
 
